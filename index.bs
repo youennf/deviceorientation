@@ -25,6 +25,9 @@ urlPrefix: https://www.w3.org/TR/page-visibility-2/; spec: PAGE-VISIBILITY
     type: dfn
         text: visible; url: dom-visibilitystate-visible
 </pre>
+<pre class=link-defaults>
+spec:webidl; type:dfn; text:resolve
+</pre>
 
 Conformance requirements {#conformance-requirements}
 ====================================================
@@ -192,40 +195,41 @@ The {{DeviceOrientationEvent/gamma}} attribute must return the value it was init
 
 The {{DeviceOrientationEvent/absolute}} attribute must return the value it was initialized to. When the object is created, this attribute must be initialized to false.
 
+On page load, run the following step:
+<ol>
+ <li><p>On the [=relevant global object=], create one internal slot: <dfn>[[\deviceOrientationEventPermission]]</dfn>, initialized to "default".</p></li>
+</ol>
 The static {{DeviceOrientationEvent/requestPermission()}} operation, when invoked, must run these steps:
 <ol>
- <li><p>Let <var>promise</var> be a new promise.
-
+ <li><p>Let <var>promise</var> be a new promise.</p>
+ <li>
+  <p>If <a>[[\deviceOrientationEventPermission]]</a> is "default" and the method call was not <a>triggered by user activation</a>,
+  then [=reject=] <var>promise</var> with a {{NotAllowedError!!exception}} {{DOMException}} and abort these steps.</p>
  <li>
   <p>Run these steps <a>in parallel</a>:
-
   <ol>
-   <li><p>Let <var>permission</var> be <a>permission</a> for
-   <a>relevant settings object</a>'s <a for="environment settings object">origin</a>.
-
-   <li><p>If <var>permission</var> is "<code>default</code>" and the method call was not <a>triggered by user activation</a>, then reject <var>promise</var> with a
-   {{NotAllowedError!!exception}} {{DOMException}} and abort these steps.
-
-   <li><p>If <var>permission</var> is "<code>default</code>", ask the user whether sharing device orientation
-   for the <a>relevant settings object</a>'s
-   <a for="environment settings object">origin</a> is acceptable. If it is, set
-   <var>permission</var> to "<code>granted</code>", and "<code>denied</code>" otherwise.
-
-   <li>
-    <p><a>Queue a task</a> to run these steps:
-
+   <div class="note">
+    <p>User Agents are encouraged to bundle concurrent permission requests into a single user-facing permission prompt.</p>
+   </div>
+   <li><p>Let <var>permission</var> be <code>null</code>.</p></li>
+   <li><p>[=Request permission to use=] a {{PermissionDescriptor}} with its {{PermissionDescriptor/name}} member set to "gyroscope".</li>
+   <li><p>If the result of the request is "denied", set <var>permission</var> to "denied" and jump to the step labeled PermissionReceived.
+   <li><p>[=Request permission to use=] a {{PermissionDescriptor}} with its {{PermissionDescriptor/name}} member set to "accelerometer".</p></li>
+   <li><p>If the result of the request is "denied", set <var>permission</var> to "denied" and jump to the step labeled PermissionReceived.
+   <li><p>[=Request permission to use=] a {{PermissionDescriptor}} with its {{PermissionDescriptor/name}} member set to "magnenometer"</p<.</li>
+   <li><p>If the result of the request is "denied", set <var>permission</var> to "denied" and jump to the step labeled PermissionReceived.
+   <li>Set <var>permission</var> to "granted".</li>
+   <li>PermissionReceived: [=Queue a task=] to run these steps:
     <ol>
-     <li><p>Set <a>permission</a> for the <a>relevant settings object</a>'s
-     <a for="environment settings object">origin</a> to <var>permission</var>.
-
-     <li><p>Fulfill <var>promise</var> with <var>permission</var>.
+     <li><p>Set <a>[[\deviceOrientationEventPermission]]</a> to <var>permission</var></li>
+     <li><p>[=Resolve=] <var>promise</var> with <var>permission</var>.
     </ol>
   </ol>
-
+ </li>
  <li><p>Return <var>promise</var>.
 </ol>
 
-The event should fire whenever a significant change in orientation occurs. The definition of a significant change in this context is left to the implementation, though a maximum threshold for change of one degree is recommended. Implementations may also fire the event if they have reason to believe that the page does not have sufficiently fresh data.
+The event should fire whenever a significant change in orientation occurs. The event MUST NOT fire except if <a>[[\deviceOrientationEventPermission]]</a> is equal to "granted". The definition of a significant change in this context is left to the implementation, though a maximum threshold for change of one degree is recommended. Implementations may also fire the event if they have reason to believe that the page does not have sufficiently fresh data.
 
 The {{DeviceOrientationEvent/alpha}}, {{DeviceOrientationEvent/beta}} and {{DeviceOrientationEvent/gamma}} attributes of the event must specify the orientation of the device in terms of the transformation from a coordinate frame fixed on the Earth to a coordinate frame fixed in the device. The {{DeviceOrientationEvent/alpha}}, {{DeviceOrientationEvent/beta}} and {{DeviceOrientationEvent/gamma}} attributes must be expressed in degrees and must not be more precise than 0.1 degrees. The coordinate frames must be oriented as described below.
 
@@ -385,39 +389,40 @@ The {{DeviceMotionEvent/rotationRate}} attribute must return the value it was in
 
 The {{DeviceMotionEvent/interval}} attribute must return the value it was initialized to. When the object is created, this attribute must be initialized to 0.
 
+On page load, run the following step:
+<ol>
+ <li><p>On the [=relevant global object=], create one internal slot: <dfn>[[\deviceMotionEventPermission]]</dfn>, initialized to "default".</p></li>
+</ol>
+
 The static {{DeviceMotionEvent/requestPermission()}} operation, when invoked, must run these steps:
 <ol>
- <li><p>Let <var>promise</var> be a new promise.
-
+ <li><p>Let <var>promise</var> be a new promise.</p>
+ <li>
+  <p>If <a>[[\deviceMotionEventPermission]]</a> is equal to "default" and the method call was not <a>triggered by user activation</a>,
+  then [=reject=] <var>promise</var> with a {{NotAllowedError!!exception}} {{DOMException}} and abort these steps.</p>
  <li>
   <p>Run these steps <a>in parallel</a>:
-
   <ol>
-   <li><p>Let <var>permission</var> be <a>permission</a> for
-   <a>relevant settings object</a>'s <a for="environment settings object">origin</a>.
-
-   <li><p>If <var>permission</var> is "<code>default</code>" and the method call was not <a>triggered by user activation</a>, then reject <var>promise</var> with a
-   {{NotAllowedError!!exception}} {{DOMException}} and abort these steps.
-
-   <li><p>If <var>permission</var> is "<code>default</code>", ask the user whether sharing device motion
-   for the <a>relevant settings object</a>'s
-   <a for="environment settings object">origin</a> is acceptable. If it is, set
-   <var>permission</var> to "<code>granted</code>", and "<code>denied</code>" otherwise.
-
-   <li>
-    <p><a>Queue a task</a> to run these steps:
-
+   <div class="note">
+    <p>User Agents are encouraged to bundle concurrent permission requests into a single user-facing permission prompt.</p>
+   </div>
+   <li><p>Let <var>permission</var> be <code>null</code>.</p></li>
+   <li><p>[=Request permission to use=] a {{PermissionDescriptor}} with its {{PermissionDescriptor/name}} member set to "gyroscope".</li>
+   <li><p>If the result of the request is "denied", set <var>permission</var> to "denied" and jump to the step labeled PermissionReceived.
+   <li><p>[=Request permission to use=] a {{PermissionDescriptor}} with its {{PermissionDescriptor/name}} member set to "accelerometer".</p></li>
+   <li><p>If the result of the request is "denied", set <var>permission</var> to "denied" and jump to the step labeled PermissionReceived.
+   <li>Set <var>permission</var> to "granted".</li>
+   <li>PermissionReceived: [=Queue a task=]] to run these steps:
     <ol>
-     <li><p>Set <a>permission</a> for the <a>relevant settings object</a>'s
-     <a for="environment settings object">origin</a> to <var>permission</var>.
-
-     <li><p>Fulfill <var>promise</var> with <var>permission</var>.
+     <li><p>Set <a>[[\deviceMotionEventPermission]]</a> to <var>permission</var></li>
+     <li><p>[=Resolve=] <var>promise</var> with <var>permission</var>.
     </ol>
   </ol>
-
+ </li>
  <li><p>Return <var>promise</var>.
 </ol>
 
+{{DeviceMotionEvent}} events MUST NOT fire except if <a>[[\deviceMotionEventPermission]]</a> value is "granted"</code>.
 In the {{DeviceMotionEvent}} events fired by the user agent, the following requirements must apply:
 
 The {{DeviceMotionEvent/acceleration}} attribute must be initialized with the acceleration of the hosting device relative to the Earth frame, expressed in the body frame, as defined in [[#deviceorientation|deviceorientation Event]] section. The acceleration must be expressed in meters per second squared (m/s<sup>2</sup>) and must not be more precise than 0.1 m/s<sup>2</sup>.
@@ -435,9 +440,9 @@ Implementations that are unable to provide all attributes must initialize the va
 <div class="issue">Further implementation experience is being gathered for the permission model and specification clarifications informed by this experience are being discussed in <a href="https://github.com/w3c/deviceorientation/issues/74">GitHub issue #74</a>.</div>
 
 <p>Implementations may choose to share device orientation &amp; motion only if the
-user (or user agent on behalf of the user) has granted <dfn>permission</dfn>.
-The <a>permission</a> to share device orientation &amp; motion
-for a given <a for=/>origin</a> is one of three strings:
+user (or user agent on behalf of the user) has granted permission.
+The permission to share device orientation &amp; motion
+for a [=relevant global object=] is one of three strings:
 
 <dl>
   <dt>"<code>default</code>"
@@ -455,7 +460,7 @@ for a given <a for=/>origin</a> is one of three strings:
 <p class=note>There is no equivalent to "<code>default</code>"
 meaning "<code>granted</code>". In that case
 "<code>granted</code>" is simply returned as there would be no reason
-for the application to ask for <a>permission</a>.
+for the application to ask for permission.
 
 Security and privacy considerations {#security-and-privacy}
 ===========================================================
